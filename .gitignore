@@ -1,0 +1,14 @@
+# Maestro Metadata
+docs/
+
+# Font Cache & Lists
+fonts.list
+fonts_cache/
+tmp_font/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Test Files (if any were meant to be temporary)
+test_*.sh
