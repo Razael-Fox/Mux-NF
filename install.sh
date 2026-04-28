@@ -70,7 +70,7 @@ detect_platform() {
 
 # --- Cleanup ---
 cleanup() {
-    rm -f fonts.list
+    rm -f fonts.list fonts.list.clean
     rm -rf "$TMP_DIR"
 }
 trap cleanup EXIT
@@ -306,6 +306,45 @@ install_font() {
     [[ "$success" == "true" ]] && return 0 || return 1
 }
 
+# --- Argument Parsing ---
+show_help() {
+    echo -e "${PRIMARY}${BOLD}Mux-NF Font Installer - Usage${NC}"
+    echo -e "  ./install.sh [options]"
+    echo
+    echo -e "${BOLD}Options:${NC}"
+    echo -e "  --font <list>    Specify one or more fonts to install (comma-separated)."
+    echo -e "                   Example: --font \"JetBrainsMono,RobotoMono\""
+    echo -e "  --cache          Clear the font cache before proceeding."
+    echo -e "  --help           Display this help message."
+    echo
+    echo -e "${BOLD}Interactive Mode:${NC}"
+    echo -e "  If no arguments are provided, the script starts in interactive mode."
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --font)
+                ARG_FONTS="$2"
+                shift 2
+                ;;
+            --cache)
+                ARG_CLEAR_CACHE=true
+                shift
+                ;;
+            --help)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo -e "${ERROR}Unknown argument: $1${NC}"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+}
+
 # --- Menu System ---
 main_menu() {
     echo -e "${PRIMARY}${BOLD}Main Menu:${NC}"
@@ -388,6 +427,57 @@ clear_cache() {
 main() {
     detect_platform
     check_deps
+    parse_args "$@"
+
+    if [[ "$ARG_CLEAR_CACHE" == "true" ]]; then
+        echo -e "${WARNING}${INFO} Clearing font cache...${NC}"
+        rm -rf "$CACHE_DIR"/*
+        echo -e "${SUCCESS}${CHECK} Cache cleared!${NC}"
+        [[ -z "$ARG_FONTS" ]] && sleep 1
+    fi
+
+    if [[ -n "$ARG_FONTS" ]]; then
+        fetch_fonts
+        # Split by comma and trim whitespace
+        IFS=',' read -ra fonts_raw <<< "$ARG_FONTS"
+        local fonts=()
+        for f in "${fonts_raw[@]}"; do
+            f=$(echo "$f" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+            [[ -n "$f" ]] && fonts+=("$f")
+        done
+
+        local count=${#fonts[@]}
+        local current=0
+
+        # Create a clean list without ANSI colors for matching
+        sed 's/\x1b\[[0-9;]*m//g' fonts.list > fonts.list.clean
+
+        for font in "${fonts[@]}"; do
+            ((current++))
+            # Try to find the exact match or append .zip
+            local target_font=""
+            if grep -Fxq "$font" fonts.list.clean; then
+                target_font="$font"
+            elif grep -Fxq "$font.zip" fonts.list.clean; then
+                target_font="$font.zip"
+            else
+                # Try case-insensitive match
+                target_font=$(grep -iE "^${font}(\.zip)?$" fonts.list.clean | head -n 1)
+            fi
+
+            if [[ -n "$target_font" ]]; then
+                echo -e "${PRIMARY}${BOLD}[$current/$count] Processing: $target_font${NC}"
+                download_font "$target_font"
+                install_font "$CACHE_DIR/$target_font"
+            else
+                echo -e "${ERROR}Font not found: $font${NC}"
+            fi
+        done
+        rm -f fonts.list.clean
+        echo -e "\n${SUCCESS}${CHECK} All specified fonts processed!${NC}"
+        exit 0
+    fi
+
     while true; do
         header
         main_menu
