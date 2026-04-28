@@ -192,9 +192,16 @@ select_font() {
         exit 1
     fi
 
-    echo -e "${PRIMARY}${ARROW} Select fonts (Tab to multi-select, cached fonts in ${SUCCESS}green${NC}):${NC}"
+    echo -e "${PRIMARY}${ARROW} Select fonts (Space to multi-select, cached fonts in ${SUCCESS}green${NC}):${NC}"
     
-    SELECTED_FONTS=$(cat fonts.list | fzf -m --ansi --prompt="Choose Font: " --height=15 --border=rounded --layout=reverse --header="Search: type name | Select: Tab/Enter | Exit: ESC" --color="$FZF_COLORS")
+    SELECTED_FONTS=$(cat fonts.list | fzf -m --ansi \
+        --prompt="Choose Font: " \
+        --height=15 \
+        --border=rounded \
+        --layout=reverse \
+        --bind 'space:toggle' \
+        --header="Search: type name | Select: Space | Confirm: Enter | Exit: ESC" \
+        --color="$FZF_COLORS")
     
     rm -f fonts.list
 
