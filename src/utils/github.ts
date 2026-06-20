@@ -1,10 +1,38 @@
 import fs from 'fs';
 import path from 'path';
+import dns from 'dns';
+import { promisify } from 'util';
 import { FontAsset } from '../types';
+
+const resolveDns = promisify(dns.resolve);
 
 const API_URL = 'https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest';
 
-export async function fetchFontsFromGitHub(cacheDir: string): Promise<FontAsset[]> {
+export async function checkInternet(): Promise<boolean> {
+  try {
+    await resolveDns('api.github.com');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchFontsFromGitHub(cacheDir: string): Promise<{ assets: FontAsset[], offline: boolean }> {
+  const isOnline = await checkInternet();
+
+  if (!isOnline) {
+    if (!fs.existsSync(cacheDir)) {
+      return { assets: [], offline: true };
+    }
+    const files = fs.readdirSync(cacheDir).filter(f => f.endsWith('.zip'));
+    const assets: FontAsset[] = files.map(f => ({
+      name: f,
+      downloadUrl: '',
+      isCached: true
+    }));
+    return { assets, offline: true };
+  }
+
   const response = await fetch(API_URL, {
     headers: {
       'User-Agent': 'mux-nf/2.0.0',
@@ -30,5 +58,5 @@ export async function fetchFontsFromGitHub(cacheDir: string): Promise<FontAsset[
       return { name, downloadUrl, isCached };
     });
 
-  return assets;
+  return { assets, offline: false };
 }

@@ -3,7 +3,7 @@ import { Box, Text, useInput } from 'ink';
 import { theme } from '../theme';
 
 export interface MainMenuProps {
-  onSelect: (option: 'install' | 'switch' | 'clear' | 'exit') => void;
+  onSelect: (option: 'install' | 'switch' | 'clear' | 'logs' | 'backup' | 'restore' | 'exit') => void;
 }
 
 export function MainMenu({ onSelect }: MainMenuProps) {
@@ -12,6 +12,9 @@ export function MainMenu({ onSelect }: MainMenuProps) {
   const options = [
     { label: 'Install New Fonts (Fetch from GitHub)', value: 'install' as const },
     { label: 'Switch Active Font (Select from Cache)', value: 'switch' as const },
+    { label: 'View Logs', value: 'logs' as const },
+    { label: 'Backup Profile', value: 'backup' as const },
+    { label: 'Restore Profile', value: 'restore' as const },
     { label: 'Clear Cache', value: 'clear' as const },
     { label: 'Exit', value: 'exit' as const },
   ];

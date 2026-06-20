@@ -5,6 +5,8 @@ export interface PlatformConfig {
   fontDest: string;
   cacheDir: string;
   tmpDir: string;
+  logFile: string;
+  configFile: string;
 }
 
 export interface FontAsset {

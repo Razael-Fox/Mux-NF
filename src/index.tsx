@@ -13,17 +13,26 @@ import { SearchableList } from './components/SearchableList';
 import { Spinner } from './components/Spinner';
 import { ConfirmPrompt } from './components/ConfirmPrompt';
 import { theme } from './theme';
+import { writeLog } from './utils/logger';
+import { saveConfig, loadConfig } from './utils/configurator';
+import { LogViewer } from './components/LogViewer';
 
 interface AppProps {
   config: PlatformConfig;
 }
 
 function App({ config }: AppProps) {
-  const [screen, setScreen] = useState<'menu' | 'fetching' | 'install-select' | 'processing' | 'switch-select' | 'clearing' | 'clear-confirm' | 'exit'>('menu');
+  const [screen, setScreen] = useState<'menu' | 'fetching' | 'install-select' | 'processing' | 'switch-select' | 'clearing' | 'clear-confirm' | 'logs' | 'backup-msg' | 'exit'>('menu');
   const [fonts, setFonts] = useState<FontAsset[]>([]);
   const [selectedFontsToProcess, setSelectedFontsToProcess] = useState<FontAsset[]>([]);
   const [cachedFonts, setCachedFonts] = useState<FontAsset[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
+
+  const transitionScreen = (newScreen: typeof screen) => {
+    process.stdout.write('\x1bc');
+    setScreen(newScreen);
+  };
   
   // Active process state
   const [processIndex, setProcessIndex] = useState(0);
@@ -38,26 +47,27 @@ function App({ config }: AppProps) {
 
   // Fetch fonts for installation
   const handleStartFetch = async () => {
-    setScreen('fetching');
+    transitionScreen('fetching');
     setErrorMsg(null);
     try {
-      const fetched = await fetchFontsFromGitHub(config.cacheDir);
-      setFonts(fetched);
-      setScreen('install-select');
+      const result = await fetchFontsFromGitHub(config.cacheDir);
+      setFonts(result.assets);
+      setIsOffline(result.offline);
+      transitionScreen('install-select');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to fetch fonts');
-      setScreen('menu');
+      transitionScreen('menu');
     }
   };
 
   // Select fonts to install
   const handleConfirmInstall = (selected: FontAsset[]) => {
     if (selected.length === 0) {
-      setScreen('menu');
+      transitionScreen('menu');
       return;
     }
     setSelectedFontsToProcess(selected);
-    setScreen('processing');
+    transitionScreen('processing');
   };
 
   // Run the processing task (download and install)
@@ -84,9 +94,11 @@ function App({ config }: AppProps) {
             await downloadFont(font.downloadUrl, zipPath, (prog) => {
               if (active) setProcessProgress(prog);
             });
-          } catch (err) {
+            writeLog(config.logFile, `Downloaded ${font.name} successfully.`);
+          } catch (err: any) {
             if (active) {
               setProcessStatus('failed');
+              writeLog(config.logFile, `Failed to download ${font.name}: ${err.message}`);
               await new Promise(r => setTimeout(r, 2000));
             }
             continue;
@@ -102,7 +114,10 @@ function App({ config }: AppProps) {
         
         if (!success && active) {
           setProcessStatus('failed');
+          writeLog(config.logFile, `Failed to install ${font.name}.`);
           await new Promise(r => setTimeout(r, 2000));
+        } else if (success) {
+          writeLog(config.logFile, `Installed ${font.name} successfully.`);
         }
 
         // Add cooling down period if there are more fonts to process
@@ -116,7 +131,7 @@ function App({ config }: AppProps) {
         setProcessStatus('completed');
         // Return to menu after 2 seconds
         await new Promise(r => setTimeout(r, 2000));
-        setScreen('menu');
+        transitionScreen('menu');
       }
     };
 
@@ -147,7 +162,7 @@ function App({ config }: AppProps) {
         isCached: true,
       }));
       setCachedFonts(cached);
-      setScreen('switch-select');
+      transitionScreen('switch-select');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to read cache');
     }
@@ -156,12 +171,12 @@ function App({ config }: AppProps) {
   // Confirm Switch font
   const handleConfirmSwitch = (selected: FontAsset[]) => {
     if (selected.length === 0) {
-      setScreen('menu');
+      transitionScreen('menu');
       return;
     }
     const font = selected[0];
     setSelectedFontsToProcess([font]);
-    setScreen('processing');
+    transitionScreen('processing');
   };
 
   // Handle Clear Cache
@@ -176,17 +191,29 @@ function App({ config }: AppProps) {
             fs.rmSync(path.join(config.cacheDir, file), { recursive: true, force: true });
           }
         }
+        writeLog(config.logFile, 'Cache cleared successfully.');
         setClearedMsg('Cache cleared successfully!');
       } catch (err: any) {
+        writeLog(config.logFile, `Failed to clear cache: ${err.message}`);
         setClearedMsg(`Failed to clear cache: ${err.message}`);
       }
       
       await new Promise(r => setTimeout(r, 1500));
-      setScreen('menu');
+      transitionScreen('menu');
       setClearedMsg('');
     };
 
     runClear();
+  }, [screen]);
+
+  // Handle Backup Message Timeout
+  useEffect(() => {
+    if (screen !== 'backup-msg') return;
+    const timer = setTimeout(() => {
+      transitionScreen('menu');
+      setClearedMsg('');
+    }, 1500);
+    return () => clearTimeout(timer);
   }, [screen]);
 
   // Handle exit
@@ -212,8 +239,36 @@ function App({ config }: AppProps) {
           onSelect={(option) => {
             if (option === 'install') handleStartFetch();
             else if (option === 'switch') handleStartSwitch();
-            else if (option === 'clear') setScreen('clear-confirm');
-            else if (option === 'exit') setScreen('exit');
+            else if (option === 'clear') transitionScreen('clear-confirm');
+            else if (option === 'logs') transitionScreen('logs');
+            else if (option === 'backup') {
+              try {
+                const cached = fs.existsSync(config.cacheDir) ? fs.readdirSync(config.cacheDir).filter(f => f.endsWith('.zip')) : [];
+                saveConfig(config.configFile, { activeProfile: null, cachedFonts: cached });
+                writeLog(config.logFile, `Backed up profile with ${cached.length} cached fonts.`);
+                setClearedMsg('Profile backed up successfully!');
+                transitionScreen('backup-msg');
+              } catch (err: any) {
+                writeLog(config.logFile, `Backup failed: ${err.message}`);
+                setErrorMsg('Backup failed.');
+              }
+            }
+            else if (option === 'restore') {
+              const conf = loadConfig(config.configFile);
+              if (!conf || !conf.cachedFonts || conf.cachedFonts.length === 0) {
+                setErrorMsg('No backup profile found or profile is empty.');
+              } else {
+                const fontsToProcess = conf.cachedFonts.map(f => ({
+                  name: f,
+                  downloadUrl: `https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${f}`,
+                  isCached: false
+                }));
+                setSelectedFontsToProcess(fontsToProcess);
+                writeLog(config.logFile, `Started restore of ${fontsToProcess.length} fonts from profile.`);
+                transitionScreen('processing');
+              }
+            }
+            else if (option === 'exit') transitionScreen('exit');
           }}
         />
       )}
@@ -226,11 +281,11 @@ function App({ config }: AppProps) {
 
       {screen === 'install-select' && (
         <SearchableList
-          title="Select Fonts to Install (Space to select multiple, cached in green)"
+          title={isOffline ? "[Offline Mode] Select Fonts to Install (Space to select multiple, cached in green)" : "Select Fonts to Install (Space to select multiple, cached in green)"}
           fonts={fonts}
           isMultiSelect={true}
           onConfirm={handleConfirmInstall}
-          onCancel={() => setScreen('menu')}
+          onCancel={() => transitionScreen('menu')}
         />
       )}
 
@@ -240,7 +295,7 @@ function App({ config }: AppProps) {
           fonts={cachedFonts}
           isMultiSelect={false}
           onConfirm={handleConfirmSwitch}
-          onCancel={() => setScreen('menu')}
+          onCancel={() => transitionScreen('menu')}
         />
       )}
 
@@ -293,9 +348,19 @@ function App({ config }: AppProps) {
       {screen === 'clear-confirm' && (
         <ConfirmPrompt
           message="Are you sure you want to clear the font cache?"
-          onConfirm={() => setScreen('clearing')}
-          onCancel={() => setScreen('menu')}
+          onConfirm={() => transitionScreen('clearing')}
+          onCancel={() => transitionScreen('menu')}
         />
+      )}
+
+      {screen === 'logs' && (
+        <LogViewer logFile={config.logFile} onClose={() => transitionScreen('menu')} />
+      )}
+
+      {screen === 'backup-msg' && (
+        <Box paddingX={2} marginY={1}>
+          <Spinner label={clearedMsg || 'Processing...'} />
+        </Box>
       )}
     </Box>
   );
@@ -347,7 +412,11 @@ async function main() {
     console.log('Fetching available fonts from GitHub...');
     let availableFonts: FontAsset[] = [];
     try {
-      availableFonts = await fetchFontsFromGitHub(config.cacheDir);
+      const result = await fetchFontsFromGitHub(config.cacheDir);
+      availableFonts = result.assets;
+      if (result.offline) {
+        console.log('[Offline Mode] Using cached fonts only.');
+      }
     } catch (err: any) {
       console.error('Error fetching font list:', err.message);
       process.exit(1);
