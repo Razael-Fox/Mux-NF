@@ -12,3 +12,8 @@ Thumbs.db
 
 # Test Files (if any were meant to be temporary)
 test_*.sh
+
+# Node / TypeScript build artifacts
+node_modules/
+temp
+

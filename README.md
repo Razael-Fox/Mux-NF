@@ -1,63 +1,50 @@
-# 🚀 Mux-NF: Multi-Platform Nerd Font Installer
+# Mux-NF 🚀
 
-A modern, interactive, and animated CLI tool to easily install Nerd Fonts on Termux, Linux, and macOS.
+<div align="center">
+  <br/>
+  <p><strong>A Next-Generation Interactive CLI Nerd Font Manager for Termux, macOS, and Linux.</strong></p>
+</div>
 
-![Platform](https://img.shields.io/badge/Platform-Termux%20%7C%20Linux%20%7C%20macOS-orange.svg)
-![Shell](https://img.shields.io/badge/Shell-Bash-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+## 🌟 Overview
+Mux-NF is a blazing fast, memory-safe, and highly interactive Nerd Font installer built with TypeScript and React Ink. Wrapped in a premium Tokyo Night aesthetic, it provides the ultimate terminal experience.
 
 ## ✨ Features
+- **🛡️ Memory-Safe (Anti-OOM):** Uses Node.js Stream Pipelines to handle massive font downloads securely on mobile OS constraints like Termux.
+- **⚡ Async Extraction:** Effortlessly extracts hundreds of massive zip files in the background without freezing the TUI animations.
+- **🎨 Premium UI:** Full-screen terminal navigation powered by React Ink and Tokyo Night colors.
+- **💾 Smart Caching:** Switch active fonts instantly from your local cache without consuming internet quota.
+- **🌐 Bilingual Support:** Native support for English and Indonesian languages.
 
-- **Multi-Platform Support**: Works seamlessly on Termux, Linux, and macOS.
-- **Interactive Selection**: Search and choose from 70+ Nerd Fonts using `fzf`.
-- **Modern UI**: Styled with ANSI colors, a compact header, and a live spinner.
-- **Smart Caching**: Downloaded fonts are cached locally to save bandwidth on re-installs.
-- **Intelligent Dependency Detection**: Automatically detects and helps install missing dependencies (`jq`, `fzf`, `curl`, `unzip`).
-- **Automated Setup**: 
-    - **Termux**: Configures `~/.termux/font.ttf` and reloads settings.
-    - **Desktop**: Installs the full font family and updates font cache.
+## 🚀 Installation
 
-## 🛠️ Installation & Usage
-
-To get started, clone the repository and run the script:
+Run this single magic command in your terminal:
 
 ```bash
-git clone https://github.com/razaeldotexe/mux-nf.git
-cd mux-nf
-chmod +x install.sh
-./install.sh
+curl -fsSL https://mux-nf.razael-fox.my.id/install | bash
 ```
 
-### 🎮 Main Menu
-The script now features a central hub for all operations:
-1. **Install New Fonts**: Fetch the latest list from GitHub and select fonts to download.
-2. **Switch Active Font**: Quickly swap between fonts you've already downloaded.
-3. **Clear Cache**: Remove all cached fonts to free up space.
+*(Note: The script automatically detects and installs Node.js & Git if they are missing on your system)*
 
-### ⌨️ Interactive Selection
-When installing new fonts:
-- **Search**: Start typing to filter the list.
-- **Multi-Select**: Press `Tab` to select multiple fonts at once.
-- **Color Coding**:
-    - <span style="color:green">**Green**</span>: Font is already cached locally.
-    - <span style="color:blue">**Blue**</span>: Currently selected for installation.
-- **Confirm**: Press `Enter` to begin processing your selection.
+## 📖 Usage
 
-> **Note for Termux users**: While you can download and cache multiple fonts, Termux only supports one active font at a time. The last font in your selection will be set as active, but you can use the "Switch Active Font" menu to change it anytime!
+- **Interactive Mode:** Simply type the command below to launch the visual menu:
+  ```bash
+  mux-nf
+  ```
+- **Headless Mode:** Quickly install specific fonts by passing arguments:
+  ```bash
+  mux-nf FiraCode Meslo JetBrainsMono
+  ```
+- **Clear Cache:** Free up storage space by running:
+  ```bash
+  mux-nf --clear
+  ```
 
-## 📦 Dependencies
+## 💻 Tech Stack
+- [Node.js](https://nodejs.org/) (Runtime)
+- TypeScript
+- React Ink (Terminal UI Framework)
+- Next.js & TailwindCSS (Landing Page)
 
-The script requires the following tools:
-- `curl` (API communication)
-- `jq` (JSON parsing)
-- `fzf` (Interactive menu)
-- `unzip` (Font extraction)
-
-On **Termux**, the script will automatically install these for you. On other platforms, it will suggest the appropriate command for your package manager.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-Made with ❤️ for the community.
+## 🤝 Credits
+Built with ❤️ by [Razael](https://github.com/Razael-Fox) and [Gemini](https://gemini.google.com/).

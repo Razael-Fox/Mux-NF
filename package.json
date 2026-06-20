@@ -1,0 +1,28 @@
+{
+  "name": "mux-nf",
+  "version": "2.0.0",
+  "description": "Multi-Platform Nerd Font Installer in TypeScript TUI",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mux-nf": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.tsx --format esm --minify --clean && echo '#!/usr/bin/env node' | cat - dist/index.js > temp && mv temp dist/index.js && chmod +x dist/index.js",
+    "dev": "tsx src/index.tsx",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "ink": "^4.4.1",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.5",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
