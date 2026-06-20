@@ -30,7 +30,6 @@ function App({ config }: AppProps) {
   const [isOffline, setIsOffline] = useState(false);
 
   const transitionScreen = (newScreen: typeof screen) => {
-    process.stdout.write('\x1b[2J\x1b[H\x1b[?25l'); // Clear screen and forcefully hide cursor
     setScreen(newScreen);
   };
   
