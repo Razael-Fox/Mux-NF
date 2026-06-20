@@ -30,7 +30,7 @@ function App({ config }: AppProps) {
   const [isOffline, setIsOffline] = useState(false);
 
   const transitionScreen = (newScreen: typeof screen) => {
-    process.stdout.write('\x1b[2J\x1b[H'); // Clear screen without resetting cursor state
+    process.stdout.write('\x1b[2J\x1b[H\x1b[?25l'); // Clear screen and forcefully hide cursor
     setScreen(newScreen);
   };
   
@@ -484,20 +484,20 @@ async function main() {
   }
 
   // Interactive Mode
-  // Enter alternate screen buffer to prevent scroll duplication
-  process.stdout.write('\x1b[?1049h');
+  // Enter alternate screen buffer and force hide cursor
+  process.stdout.write('\x1b[?1049h\x1b[?25l');
   
   const { waitUntilExit } = render(<App config={config} />);
   
   await waitUntilExit();
   
-  // Exit alternate screen buffer
-  process.stdout.write('\x1b[?1049l');
+  // Exit alternate screen buffer and restore cursor
+  process.stdout.write('\x1b[?1049l\x1b[?25h');
   process.exit(0);
 }
 
 main().catch((err) => {
   console.error('Fatal error:', err);
-  process.stdout.write('\x1b[?1049l'); // Ensure we exit alt screen on fatal error
+  process.stdout.write('\x1b[?1049l\x1b[?25h'); // Ensure we exit alt screen and restore cursor on fatal error
   process.exit(1);
 });
