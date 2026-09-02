@@ -1,0 +1,21 @@
+{
+  "buildCommand": "echo 'No build required for Vercel static hosting'",
+  "installCommand": "echo 'No install required for Vercel static hosting'",
+  "rewrites": [
+    {
+      "source": "/install",
+      "destination": "/web-install.sh"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/web-install.sh",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain"
+        }
+      ]
+    }
+  ]
+}
