@@ -23,6 +23,11 @@ Run this single magic command in your terminal:
 curl -fsSL https://mux-nf.razael-fox.my.id/install | bash
 ```
 
+> **Fallback:** If the custom domain is down or caching an old version, you can install directly from GitHub:
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/Razael-Fox/Mux-NF/main/install.sh | bash
+> ```
+
 *(Note: The script automatically detects and installs Node.js & Git if they are missing on your system)*
 
 ## Usage

@@ -1,16 +1,16 @@
 {
   "framework": null,
-  "buildCommand": "mkdir -p public && cp web-install.sh public/web-install.sh",
+  "buildCommand": "mkdir -p public && cp install.sh public/install.sh",
   "installCommand": "echo 'No install required for Vercel static hosting'",
   "rewrites": [
     {
       "source": "/install",
-      "destination": "/web-install.sh"
+      "destination": "/install.sh"
     }
   ],
   "headers": [
     {
-      "source": "/web-install.sh",
+      "source": "/install.sh",
       "headers": [
         {
           "key": "Content-Type",
