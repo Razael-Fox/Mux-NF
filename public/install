@@ -52,7 +52,7 @@ fi
 # 3. Kloning Repositori Mux-NF
 INSTALL_DIR="$HOME/.mux-nf"
 # GANTI URL DI BAWAH INI DENGAN REPOSITORI GITHUB/SERVER KAMU:
-REPO_URL="https://github.com/razaeldotexe/mux-nf.git"
+REPO_URL="https://github.com/Razael-Fox/Mux-NF.git"
 
 echo -e "${BLUE}[*] Mengunduh Mux-NF Manager...${NC}"
 if [ -d "$INSTALL_DIR" ]; then
