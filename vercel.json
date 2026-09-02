@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "buildCommand": "echo 'No build required for Vercel static hosting'",
   "installCommand": "echo 'No install required for Vercel static hosting'",
   "rewrites": [
